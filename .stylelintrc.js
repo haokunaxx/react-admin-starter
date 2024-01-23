@@ -6,6 +6,7 @@ module.exports = {
   ],
   ignoreFiles: ['**/*.js', '**/*.ts', '**/*.json', '**/*.md', '**/*.yaml'],
   rules: {
+    'at-rule-no-unknown': null,
     'selector-class-pattern': null,
     'keyframes-name-pattern': null,
     'declaration-block-trailing-semicolon': null,

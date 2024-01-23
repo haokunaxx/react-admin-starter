@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import ReactDOM from 'react-dom/client'
 import { Provider, useSelector, useDispatch } from 'react-redux'
 import {
@@ -6,6 +6,7 @@ import {
   createBrowserRouter,
   type RouteObject
 } from 'react-router-dom'
+import { message, Spin } from 'antd'
 
 import { Login } from './modules/login'
 import { Layout } from './modules/layout'
@@ -20,16 +21,18 @@ import {
   moduleBasicRoutes
 } from './routes'
 
-import { checkIsLogin, setToken } from './utils/auth'
+import { checkIsLogin, getToken, removeToken } from './utils/auth'
 import {
   getUserLoading,
-  setUserLoading,
+  updateUserLoading,
   updateUserInfo,
   updateToken
 } from './store/globalState'
-import { SYSTEM_ROLE } from './mock/userInfo'
-
 import './index.css'
+
+import './mock/index'
+import axios from 'axios'
+import { MockResponseStatus } from './types'
 
 type RouteObjectWithKey = RouteObject & {
   key: string
@@ -53,10 +56,24 @@ function getRenderRoutes(routes: RouteObjectWithKey[]) {
   return result
 }
 
+function PageLoading() {
+  return (
+    <div className="page-loading-container h-full w-full flex justify-center items-center">
+      <Spin size="large" tip="Loading">
+        <div className="content p-12"></div>
+      </Spin>
+    </div>
+  )
+}
+
 export function App() {
   const dispatch = useDispatch()
+
   const userLoading = useSelector(getUserLoading)
   const userModules = useSelector(getUserModules)
+
+  const [messageApi, contextHolder] = message.useMessage()
+
   const _router = useMemo(() => {
     const staticRoutes = [
       {
@@ -82,56 +99,52 @@ export function App() {
     }
   }, [userModules])
 
+  const fetchUserInfo = useCallback(async () => {
+    const res = await axios.post<{
+      status: string
+      msg: string
+      data?: any
+    }>('/api/user/userInfo')
+    const { status, msg, data } = res.data
+    if (status !== MockResponseStatus.SUCCESS || !data) {
+      messageApi.open({
+        type: 'error',
+        content: msg || '获取用户信息失败，请重新登录'
+      })
+      removeToken()
+      window.location.href = '/'
+      return
+    }
+    // 更新用户信息
+    dispatch(updateUserInfo(data))
+    dispatch(updateUserLoading(false))
+  }, [dispatch, messageApi])
+
   useEffect(() => {
     if (!checkIsLogin()) {
-      dispatch(setUserLoading(false))
-      setToken('this-is-user-token')
+      // 未登录
+      dispatch(updateUserLoading(false)) //设置为false后，渲染RouterProvider后如果路由不是/login则会重定向至/login
     } else {
-      setTimeout(() => {
-        const userToken = 'this-is-user-token'
-        dispatch(
-          updateUserInfo({
-            username: 'Admin',
-            role: SYSTEM_ROLE.USER,
-            modules: {
-              'menu.dashboard': '',
-              'menu.dashboard.workplace': '',
-              'menu.permission-test': '',
-              'menu.permission-test.public-page': '',
-              'menu.profile': '',
-              'menu.profile.basic': '',
-              'menu.profile.advanced': '',
-              'menu.list': '',
-              'menu.list.basic-list': '0000', //CRUD
-              'menu.list.card-list': '0000', //可新增、删除
-              'menu.exception': '',
-              'menu.exception.403': '',
-              'menu.exception.404': '',
-              'menu.exception.500': '',
-              'menu.form': '',
-              'menu.form.basic-form': '',
-              'menu.form.step-form': '',
-              'menu.form.advanced-form': '',
-              'menu.form.form-association': ''
-            }
-          })
-        )
-        dispatch(updateToken(userToken))
-        // setToken(userToken)
-        dispatch(setUserLoading(false))
-      }, 3000)
+      if (!userLoading) return
+      const token = getToken() as string
+      dispatch(updateToken(token))
+      fetchUserInfo()
     }
-  }, [dispatch])
+  }, [userLoading, dispatch, fetchUserInfo])
 
   const router = createBrowserRouter(_router)
-
-  return userLoading ? <h1>Loading...</h1> : <RouterProvider router={router} />
+  return (
+    <>
+      {contextHolder}
+      {userLoading ? <PageLoading /> : <RouterProvider router={router} />}
+    </>
+  )
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  // <React.StrictMode>
-  <Provider store={store}>
-    <App />
-  </Provider>
-  // </React.StrictMode>
+  <React.StrictMode>
+    <Provider store={store}>
+      <App />
+    </Provider>
+  </React.StrictMode>
 )

@@ -131,3 +131,14 @@ export function getUserInfoByRole(role: SYSTEM_ROLE) {
 //   'menu.list.basic-list': '1111', //CRUD
 //   'menu.list.card-list': '0110' //可新增、删除
 // },
+
+export const getTokenByUsername = (username: string) =>
+  `this-is-${username}-token`
+
+export const getUserInfoByToken = (token: string) => {
+  return {
+    'this-is-User-token': UserInfo,
+    'this-is-Admin-token': AdminInfo,
+    'this-is-SuperAdmin-token': SuperAdminInfo
+  }[token]
+}

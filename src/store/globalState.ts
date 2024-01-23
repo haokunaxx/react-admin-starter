@@ -27,26 +27,27 @@ export const globalStateSlice = createSlice({
   name: 'userInfo',
   initialState,
   reducers: {
-    // 更新用户信息
     updateUserInfo(state, action: PayloadAction<GlobalState['userInfo']>) {
       state.userInfo = action.payload
     },
-    // 更新用户设置
     updateSettings(state, action: PayloadAction<GlobalState['settings']>) {
       state.settings = action.payload
     },
-    // 更新token
     updateToken(state, action: PayloadAction<string>) {
-      state.token = action.payload
+      state.token !== action.payload && (state.token = action.payload)
     },
-    setUserLoading(state, action: PayloadAction<boolean>) {
+    updateUserLoading(state, action: PayloadAction<boolean>) {
       state.userLoading = action.payload
     }
   }
 })
 
-export const { updateUserInfo, updateSettings, updateToken, setUserLoading } =
-  globalStateSlice.actions
+export const {
+  updateUserInfo,
+  updateSettings,
+  updateToken,
+  updateUserLoading
+} = globalStateSlice.actions
 
 export const getUserModules = (state: RootState) =>
   state.globalState.userInfo.modules
