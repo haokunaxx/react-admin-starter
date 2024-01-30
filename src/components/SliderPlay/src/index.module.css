@@ -1,0 +1,43 @@
+@keyframes rowMove{
+  0%{
+    transform: translateX(0);
+  }
+
+  100%{
+    transform: translateX(-100%);
+  }
+}
+
+.slider-play-wrapper{
+  overflow: hidden;
+  width: 100%;
+}
+
+.slider-play-row{
+  display: flex;
+  margin: 12px 0;
+
+  .slider-play-row-item:nth-child(1){
+    animation: rowMove var(--t) linear infinite;
+  }
+
+  .slider-play-row-item:nth-child(2){
+    animation: rowMove var(--t) linear infinite;
+  }
+}
+
+.pause-when-hovered{
+  &:hover > .slider-play-row-item{
+    animation-play-state: paused;
+  }
+}
+
+.slider-play-row-item{
+  flex-shrink: 0;
+  display: flex;
+}
+
+
+
+
+
